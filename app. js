@@ -1,0 +1,78 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+
+// Initialize the app
+const app = express();
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+}));
+
+// Mock database for storing users
+let users = [
+    {
+        id: 1,
+        username: 'student1',
+        password: '$2a$10$EIXwnOZsiuw3n9zvcSOs5OLWBoPMK6/S6gF5NXTNgyx/QAKDlbBWC', // hashed password for 'password123'
+        info: 'Student 1 Info'
+    },
+    {
+        id: 2,
+        username: 'student2',
+        password: '$2a$10$EIXwnOZsiuw3n9zvcSOs5OLWBoPMK6/S6gF5NXTNgyx/QAKDlbBWC', // hashed password for 'password123'
+        info: 'Student 2 Info'
+    }
+];
+
+// Helper function to authenticate users
+function authenticateUser(username, password) {
+    const user = users.find(u => u.username === username);
+    if (user) {
+        const isValid = bcrypt.compareSync(password, user.password);
+        if (isValid) {
+            return user;
+        }
+    }
+    return null;
+}
+
+// Routes
+
+// Home route
+app.get('/', (req, res) => {
+    if (req.session.userId) {
+        const user = users.find(u => u.id === req.session.userId);
+        res.send(`<h1>Welcome, ${user.username}</h1><p>${user.info}</p><a href="/logout">Logout</a>`);
+    } else {
+        res.sendFile(__dirname + '/login.html');
+    }
+});
+
+// Login route
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = authenticateUser(username, password);
+    if (user) {
+        req.session.userId = user.id;
+        res.redirect('/');
+    } else {
+        res.send('Invalid username or password. <a href="/">Try again</a>');
+    }
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/');
+});
+
+// Start the server
+app.listen(3000, () => {
+    console.log('Server started on http://localhost:3000');
+});
