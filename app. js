@@ -53,7 +53,9 @@ app.get('/', (req, res) => {
         res.sendFile(__dirname + '/login.html');
     }
 });
-
+// sports route goes here
+// academics route goes here
+// include three other routes
 // Login route
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
